@@ -1,0 +1,12 @@
+services:
+  vampire-platform:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: vampire-platform:latest
+    container_name: vampire_platform_v5
+    restart: unless-stopped
+    ports:
+      - "8000:8000"
+    environment:
+      - PYTHONUNBUFFERED=1

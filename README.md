@@ -31,13 +31,34 @@ Plataforma Web e Mesa Virtual para jogar **Vampiro: A Máscara (5ª Edição - V
 
 ## 🛠️ Como Executar
 
+### Opção 1: Via Docker (Recomendado)
+
+Você pode subir a aplicação em container sem precisar configurar Python localmente:
+
+```bash
+# Com Docker Compose:
+docker compose up -d
+
+# Ou via comando docker direto:
+docker run -d --name vampire_platform -p 8000:8000 vampire-platform:latest
+```
+
+Para rebuildar a imagem caso faça alterações no código:
+```bash
+docker compose build
+```
+
+---
+
+### Opção 2: Localmente (sem Docker)
+
 Dentro da pasta `VampirePlatform`:
 
 ```bash
-# Opção 1: Via script facilitador
+# Via script facilitador
 ./run.sh
 
-# Opção 2: Diretamente pelo uvicorn do ambiente virtual
+# Ou diretamente pelo uvicorn do ambiente virtual
 ./venv/bin/uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
 ```
 
