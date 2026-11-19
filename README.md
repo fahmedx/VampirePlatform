@@ -87,3 +87,7 @@ VampirePlatform/
 ├── run.sh                    # Script de inicialização
 └── venv/                     # Ambiente virtual Python
 ```
+
+## 🎲 Teste a mesa virtual
+
+https://vampireplatform-2.onrender.com/
