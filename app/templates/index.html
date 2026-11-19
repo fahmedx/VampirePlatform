@@ -1,0 +1,379 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Vampire: The Masquerade V5 - Plataforma de Jogo</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Google Fonts: Cinzel Decorative & Inter -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@500;700;900&family=Cinzel+Decorative:wght@700&family=Inter:wght@300;400;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="/static/css/style.css">
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        vampire: {
+                            black: '#0a0a0c',
+                            dark: '#121117',
+                            card: '#1a1822',
+                            cardHover: '#23202e',
+                            crimson: '#8a0f1a',
+                            blood: '#b91c1c',
+                            bloodGlow: '#ef4444',
+                            gold: '#c5a059',
+                            goldLight: '#e4c481',
+                            muted: '#8e8a9f'
+                        }
+                    },
+                    fontFamily: {
+                        gothic: ['"Cinzel"', 'serif'],
+                        decorative: ['"Cinzel Decorative"', 'serif'],
+                        sans: ['"Inter"', 'sans-serif']
+                    }
+                }
+            }
+        }
+    </script>
+</head>
+<body class="bg-vampire-black text-gray-200 min-h-screen font-sans flex flex-col selection:bg-vampire-blood selection:text-white">
+
+    <!-- Top Navigation Header -->
+    <header class="border-b border-red-950/60 bg-vampire-dark/90 backdrop-blur sticky top-0 z-50 px-4 py-3 shadow-2xl shadow-red-950/20">
+        <div class="max-w-7xl mx-auto flex items-center justify-between">
+            <div class="flex items-center space-x-3">
+                <span class="text-2xl text-vampire-blood">🩸</span>
+                <div>
+                    <h1 class="font-decorative text-lg md:text-xl font-bold tracking-widest text-transparent bg-clip-text bg-gradient-to-r from-red-600 via-rose-300 to-amber-200">
+                        VAMPIRE <span class="text-xs text-red-500 font-sans tracking-normal font-semibold">V5</span>
+                    </h1>
+                    <p class="text-[10px] uppercase tracking-widest text-vampire-muted font-gothic">Mesa Virtual & Rolador de Sangue</p>
+                </div>
+            </div>
+
+            <!-- In-Game Room Bar (Hidden when in Lobby) -->
+            <div id="header-room-info" class="hidden items-center space-x-4">
+                <div class="flex items-center bg-black/40 border border-red-900/40 rounded-lg px-3 py-1 text-xs">
+                    <span class="text-vampire-muted mr-2">SALA:</span>
+                    <span id="room-badge" class="font-mono font-bold text-vampire-gold text-sm tracking-wider">---</span>
+                    <button id="btn-copy-code" title="Copiar código da sala" class="ml-2 text-vampire-muted hover:text-white transition">📋</button>
+                </div>
+
+                <div class="flex items-center space-x-2 text-xs bg-red-950/30 border border-red-900/30 rounded-lg px-3 py-1">
+                    <span id="player-role-badge" class="px-1.5 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider bg-red-900/60 text-red-200">Jogador</span>
+                    <span id="player-header-name" class="font-semibold text-gray-200">Personagem</span>
+                    <span class="text-xs text-vampire-gold" id="player-header-clan">(Clã)</span>
+                </div>
+
+                <button id="btn-leave-room" class="text-xs bg-stone-900 hover:bg-stone-800 text-stone-400 hover:text-red-400 border border-stone-800 px-2.5 py-1 rounded transition">
+                    Sair
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Container -->
+    <main class="flex-1 max-w-7xl w-full mx-auto p-4 md:p-6 flex flex-col">
+
+        <!-- LOBBY SCREEN (Quando desconectado) -->
+        <section id="lobby-screen" class="my-auto py-8">
+            <div class="max-w-xl mx-auto bg-vampire-card/90 border border-red-950/80 rounded-2xl p-6 md:p-8 shadow-2xl relative overflow-hidden">
+                <div class="absolute -top-12 -right-12 w-48 h-48 bg-red-900/10 rounded-full blur-3xl pointer-events-none"></div>
+                <div class="absolute -bottom-12 -left-12 w-48 h-48 bg-amber-900/10 rounded-full blur-3xl pointer-events-none"></div>
+
+                <div class="text-center mb-6">
+                    <span class="inline-block p-3 rounded-full bg-red-950/50 border border-red-900/50 text-3xl mb-3 shadow-inner">🧛‍♂️</span>
+                    <h2 class="font-gothic text-2xl font-bold text-gray-100 tracking-wide">Entre na Noite Eterna</h2>
+                    <p class="text-xs text-vampire-muted mt-1">Conecte-se com seus companheiros de coterie para rolar dados em tempo real</p>
+                </div>
+
+                <div id="lobby-error" class="hidden mb-5 p-3 rounded-lg bg-red-950/80 border border-red-600 text-red-200 text-xs flex items-start space-x-2 shadow-lg">
+                    <span class="text-base">⚠️</span>
+                    <div id="lobby-error-text" class="flex-1"></div>
+                </div>
+
+                <form id="lobby-form" class="space-y-4">
+                    <div>
+                        <label class="block text-xs font-semibold uppercase tracking-wider text-vampire-gold mb-1">Código da Sala / Mesa</label>
+                        <div class="flex space-x-2">
+                            <input type="text" id="input-room" required value="ELYSIUM-01" placeholder="Ex: ELYSIUM-01" 
+                                class="flex-1 bg-black/50 border border-stone-800 focus:border-red-600 rounded-lg px-3 py-2 text-sm text-white placeholder-stone-600 focus:outline-none uppercase font-mono tracking-wider">
+                            <button type="button" id="btn-random-room" class="bg-stone-800 hover:bg-stone-700 text-xs px-3 py-2 rounded-lg text-stone-300 transition">
+                                Gerar
+                            </button>
+                        </div>
+                        <p class="text-[10px] text-stone-500 mt-1">Jogadores na mesma mesa devem usar exatamente o mesmo código.</p>
+                    </div>
+
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div>
+                            <label class="block text-xs font-semibold uppercase tracking-wider text-vampire-gold mb-1">Nome do Personagem</label>
+                            <input type="text" id="input-name" required placeholder="Ex: Christian Gray" 
+                                class="w-full bg-black/50 border border-stone-800 focus:border-red-600 rounded-lg px-3 py-2 text-sm text-white placeholder-stone-600 focus:outline-none">
+                        </div>
+
+                        <div>
+                            <label class="block text-xs font-semibold uppercase tracking-wider text-vampire-gold mb-1">Clã Vampírico</label>
+                            <select id="input-clan" class="w-full bg-black/50 border border-stone-800 focus:border-red-600 rounded-lg px-3 py-2 text-sm text-white focus:outline-none">
+                                <option value="Brujah">Brujah</option>
+                                <option value="Gangrel">Gangrel</option>
+                                <option value="Malkavian">Malkavian</option>
+                                <option value="Nosferatu">Nosferatu</option>
+                                <option value="Toreador">Toreador</option>
+                                <option value="Tremere" selected>Tremere</option>
+                                <option value="Ventrue">Ventrue</option>
+                                <option value="Lasombra">Lasombra</option>
+                                <option value="Hecata">Hecata</option>
+                                <option value="The Ministry">The Ministry</option>
+                                <option value="Banu Haqim">Banu Haqim</option>
+                                <option value="Ravnos">Ravnos</option>
+                                <option value="Tzimisce">Tzimisce</option>
+                                <option value="Caitiff">Caitiff</option>
+                                <option value="Sangue-Ralo">Sangue-Ralo (Thin-Blood)</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div>
+                            <label class="block text-xs font-semibold uppercase tracking-wider text-vampire-gold mb-1">Função na Mesa</label>
+                            <select id="input-role" class="w-full bg-black/50 border border-stone-800 focus:border-red-600 rounded-lg px-3 py-2 text-sm text-white focus:outline-none">
+                                <option value="player" selected>Jogador (Vampiro)</option>
+                                <option value="narrator">Narrador (Storyteller)</option>
+                            </select>
+                        </div>
+
+                        <div>
+                            <label class="block text-xs font-semibold uppercase tracking-wider text-vampire-gold mb-1">Fome Inicial (0 a 5)</label>
+                            <div class="flex items-center space-x-2">
+                                <input type="range" id="input-hunger" min="0" max="5" value="1" 
+                                    class="w-full accent-red-600 cursor-pointer">
+                                <span id="hunger-display-val" class="text-sm font-bold text-red-500 font-mono w-6 text-center">1</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="pt-4">
+                        <button type="submit" id="btn-submit-lobby"
+                            class="w-full bg-gradient-to-r from-red-800 via-red-700 to-rose-900 hover:from-red-700 hover:to-rose-800 text-white font-gothic tracking-widest font-bold py-3 rounded-lg shadow-lg shadow-red-950/50 hover:shadow-red-800/40 transition duration-200 border border-red-700/50 flex items-center justify-center space-x-2">
+                            <span id="btn-submit-label">ENTRAR NA SESSÃO</span>
+                            <span id="btn-submit-icon">🩸</span>
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </section>
+
+        <!-- GAME BOARD (Quando conectado) -->
+        <section id="game-board" class="hidden flex-1 grid grid-cols-1 lg:grid-cols-12 gap-6">
+
+            <!-- COLUNA ESQUERDA: Coterie (Jogadores na Sala) & Ficha Rápida (4 cols) -->
+            <div class="lg:col-span-4 space-y-6">
+
+                <!-- Ficha Rápida / Dashboard do Jogador -->
+                <div class="bg-vampire-card border border-red-950/70 rounded-xl p-5 shadow-xl relative overflow-hidden">
+                    <div class="flex justify-between items-start border-b border-stone-800/60 pb-3 mb-4">
+                        <div>
+                            <h3 id="sheet-player-name" class="font-gothic font-bold text-lg text-gray-100">Nome</h3>
+                            <p id="sheet-player-clan" class="text-xs text-vampire-gold font-semibold uppercase tracking-wider">Clã Tremere</p>
+                        </div>
+                        <span id="sheet-role-badge" class="text-[10px] px-2 py-0.5 rounded font-bold uppercase bg-red-950 text-red-300 border border-red-800/40">Jogador</span>
+                    </div>
+
+                    <!-- Medidor de Fome (Hunger Tracker) -->
+                    <div class="mb-5 bg-black/40 border border-red-950/80 rounded-lg p-3">
+                        <div class="flex justify-between items-center mb-2">
+                            <span class="text-xs font-semibold text-red-400 uppercase tracking-widest flex items-center">
+                                <span class="mr-1.5">🩸</span> FOME ATUAL
+                            </span>
+                            <div class="flex items-center space-x-1">
+                                <button id="btn-hunger-dec" class="w-6 h-6 rounded bg-stone-900 border border-stone-700 hover:bg-stone-800 text-xs text-stone-300 font-bold flex items-center justify-center transition">-</button>
+                                <span id="hunger-counter" class="text-sm font-bold text-red-500 font-mono px-1">1</span>
+                                <button id="btn-hunger-inc" class="w-6 h-6 rounded bg-stone-900 border border-stone-700 hover:bg-stone-800 text-xs text-stone-300 font-bold flex items-center justify-center transition">+</button>
+                            </div>
+                        </div>
+
+                        <!-- Gotas de Sangue Interativas -->
+                        <div id="hunger-droplets" class="flex justify-between px-2 pt-1">
+                            <!-- 5 Gotas geradas via JS -->
+                        </div>
+                        <p id="hunger-status-msg" class="text-[11px] text-stone-400 mt-2 text-center italic">
+                            A Besta murmura sob a pele...
+                        </p>
+                    </div>
+
+                    <!-- Botão Rápido: Teste de Sangue (Rouse Check) -->
+                    <div class="space-y-2">
+                        <button id="btn-rouse-check" class="w-full bg-gradient-to-r from-red-950 via-red-900 to-stone-900 hover:from-red-900 hover:to-red-800 border border-red-700/40 text-red-100 font-semibold py-2.5 px-3 rounded-lg text-xs tracking-wider flex items-center justify-center space-x-2 shadow transition group">
+                            <span class="text-base group-hover:scale-125 transition transform">🩸</span>
+                            <span>TESTE DE SANGUE (ROUSE CHECK)</span>
+                        </button>
+                        <p class="text-[10px] text-stone-500 text-center">Rola 1 dado. Falha (1-5) aumenta sua Fome em 1.</p>
+                    </div>
+                </div>
+
+                <!-- Lista da Coterie (Jogadores Conectados na Sala) -->
+                <div class="bg-vampire-card border border-stone-800/60 rounded-xl p-5 shadow-xl">
+                    <div class="flex items-center justify-between border-b border-stone-800/60 pb-3 mb-3">
+                        <h4 class="font-gothic text-sm font-bold text-stone-300 uppercase tracking-wider flex items-center">
+                            <span class="w-2 h-2 rounded-full bg-emerald-500 mr-2 animate-pulse"></span>
+                            Coterie (<span id="coterie-count">1</span>)
+                        </h4>
+                        <span class="text-[10px] text-vampire-muted">Ao Vivo</span>
+                    </div>
+
+                    <div id="coterie-list" class="space-y-2.5 max-h-72 overflow-y-auto pr-1">
+                        <!-- Itens da coterie renderizados via JS -->
+                    </div>
+                </div>
+
+            </div>
+
+            <!-- COLUNA DIREITA: Deck de Rolagem de Dados & Feed ao Vivo (8 cols) -->
+            <div class="lg:col-span-8 flex flex-col space-y-6">
+
+                <!-- Painel de Dificuldade Secreta do Narrador (Apenas para Narradores) -->
+                <div id="narrator-secret-panel" class="hidden bg-gradient-to-r from-amber-950/40 via-stone-900 to-amber-950/20 border border-amber-600/50 rounded-xl p-3 shadow-lg">
+                    <div class="flex flex-wrap items-center justify-between gap-2">
+                        <div class="flex items-center space-x-2">
+                            <span class="text-base text-amber-400">👑</span>
+                            <div>
+                                <span class="text-xs font-gothic font-bold uppercase tracking-wider text-amber-200">Dificuldade Secreta da Mesa</span>
+                                <p class="text-[10px] text-stone-400">Quando ativa, os jogadores não veem a dificuldade nem se passaram ou falharam</p>
+                            </div>
+                        </div>
+                        <div class="flex items-center space-x-2">
+                            <label class="text-xs text-stone-300 font-semibold">Dif:</label>
+                            <input type="number" id="narrator-secret-diff-val" min="1" max="15" value="3" 
+                                class="w-12 bg-black/60 border border-amber-600/60 rounded px-1.5 py-1 text-center text-xs font-mono font-bold text-amber-300 focus:outline-none">
+                            <button type="button" id="btn-toggle-secret-diff" 
+                                class="px-3 py-1 rounded text-xs font-bold uppercase tracking-wider transition bg-stone-800 hover:bg-stone-700 text-stone-300 border border-stone-600">
+                                Ativar na Mesa
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Indicador para Jogadores quando Dificuldade Secreta está ativa -->
+                <div id="player-secret-diff-indicator" class="hidden bg-amber-950/30 border border-amber-600/40 rounded-lg p-2.5 text-xs text-amber-200 flex items-center space-x-2">
+                    <span class="text-base">🎯</span>
+                    <span>O Narrador ativou uma <strong>Dificuldade Secreta</strong> para a cena. Seus dados e sucessos aparecerão normalmente, mas apenas o Narrador verá o desfecho!</span>
+                </div>
+
+                <!-- DECK DE ROLAGEM V5 -->
+                <div class="bg-vampire-card border border-red-950/70 rounded-xl p-5 shadow-xl">
+                    <div class="flex items-center justify-between border-b border-stone-800/60 pb-3 mb-4">
+                        <div class="flex items-center space-x-2">
+                            <span class="text-xl">🎲</span>
+                            <h3 class="font-gothic font-bold text-base text-gray-100 uppercase tracking-wider">Rolador de Parada V5</h3>
+                        </div>
+                        <div class="flex items-center space-x-3">
+                            <!-- Toggle Torre Secreta -->
+                            <label class="flex items-center cursor-pointer text-xs text-stone-400 hover:text-stone-200 select-none">
+                                <input type="checkbox" id="checkbox-secret" class="mr-1.5 accent-red-600 rounded">
+                                <span>🔒 Torre Secreta</span>
+                            </label>
+                        </div>
+                    </div>
+
+                    <!-- Seletores: Parada de Dados (Pool) e Dificuldade -->
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                        <!-- Parada (Pool) -->
+                        <div class="bg-black/40 border border-stone-800/80 rounded-lg p-3">
+                            <div class="flex justify-between items-center mb-1">
+                                <span class="text-xs uppercase font-semibold text-stone-300">Parada de Dados (Pool)</span>
+                                <div class="flex items-center space-x-1.5">
+                                    <input type="number" id="pool-input" min="1" max="30" value="5"
+                                        class="w-14 bg-stone-900 border border-amber-600/50 rounded px-1.5 py-0.5 text-center font-mono font-bold text-vampire-gold text-sm focus:border-amber-400 focus:outline-none">
+                                    <span class="text-[10px] text-stone-400">dados</span>
+                                </div>
+                            </div>
+                            <input type="range" id="pool-slider" min="1" max="15" value="5" class="w-full accent-amber-500 cursor-pointer">
+                            <div class="flex justify-between text-[10px] text-stone-500 mt-1 font-mono">
+                                <span>1</span>
+                                <span>5</span>
+                                <span>10</span>
+                                <span>15</span>
+                            </div>
+                        </div>
+
+                        <!-- Dificuldade -->
+                        <div class="bg-black/40 border border-stone-800/80 rounded-lg p-3">
+                            <div class="flex justify-between items-center mb-1">
+                                <span class="text-xs uppercase font-semibold text-stone-300">Dificuldade</span>
+                                <div class="flex items-center space-x-1.5">
+                                    <input type="number" id="diff-input" min="0" max="15" value="1"
+                                        class="w-14 bg-stone-900 border border-red-600/50 rounded px-1.5 py-0.5 text-center font-mono font-bold text-red-400 text-sm focus:border-red-400 focus:outline-none">
+                                    <span class="text-[10px] text-stone-400">dif</span>
+                                </div>
+                            </div>
+                            <input type="range" id="diff-slider" min="1" max="8" value="1" class="w-full accent-red-500 cursor-pointer">
+                            <div class="flex justify-between text-[10px] text-stone-500 mt-1 font-mono">
+                                <span>1 (Fácil)</span>
+                                <span>3 (Médio)</span>
+                                <span>5 (Difícil)</span>
+                                <span>8 (Heroico)</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Pré-visualização da Composição dos Dados -->
+                    <div class="bg-black/30 border border-red-950/50 rounded-lg p-3 mb-4 flex flex-wrap items-center justify-between text-xs">
+                        <div class="flex items-center space-x-4">
+                            <div class="flex items-center space-x-1.5">
+                                <span class="w-3.5 h-3.5 rounded bg-stone-900 border border-amber-500/70 inline-block shadow"></span>
+                                <span class="text-stone-300">Normais: <strong id="preview-normal-count" class="text-amber-300 font-mono">4</strong></span>
+                            </div>
+                            <div class="flex items-center space-x-1.5">
+                                <span class="w-3.5 h-3.5 rounded bg-red-900 border border-red-500 inline-block shadow"></span>
+                                <span class="text-stone-300">Fome: <strong id="preview-hunger-count" class="text-red-400 font-mono">1</strong></span>
+                            </div>
+                        </div>
+                        <span class="text-[11px] text-stone-500">Dados de Fome substituem dados normais</span>
+                    </div>
+
+                    <!-- Botão de Rolagem Principal -->
+                    <button id="btn-roll" 
+                        class="w-full bg-gradient-to-r from-red-800 via-rose-900 to-red-950 hover:from-red-700 hover:to-rose-800 text-white font-gothic tracking-widest font-bold py-3.5 rounded-lg shadow-xl shadow-red-950/60 border border-red-700/60 transition duration-150 transform active:scale-[0.99] flex items-center justify-center space-x-3 text-base">
+                        <span>ROLAR DADOS DA PARADA</span>
+                        <span class="text-xl">🎲</span>
+                    </button>
+                </div>
+
+                <!-- FEED DE ROLAGENS AO VIVO -->
+                <div class="bg-vampire-card border border-stone-800/60 rounded-xl p-5 shadow-xl flex-1 flex flex-col">
+                    <div class="flex items-center justify-between border-b border-stone-800/60 pb-3 mb-4">
+                        <div class="flex items-center space-x-2">
+                            <span class="text-lg">📜</span>
+                            <h3 class="font-gothic font-bold text-sm text-gray-200 uppercase tracking-wider">Histórico da Noite</h3>
+                        </div>
+                        <span class="text-xs text-stone-500" id="roll-count-badge">0 rolagens</span>
+                    </div>
+
+                    <div id="roll-feed" class="space-y-4 flex-1 overflow-y-auto max-h-[520px] pr-2">
+                        <!-- Feed vazio inicial -->
+                        <div id="feed-empty-state" class="text-center py-12 text-stone-500">
+                            <span class="text-3xl block mb-2 opacity-40">🦇</span>
+                            <p class="text-xs">Nenhuma rolagem feita ainda nesta sessão.</p>
+                            <p class="text-[10px] text-stone-600 mt-1">Role os dados acima ou faça um Teste de Sangue.</p>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+
+        </section>
+
+    </main>
+
+    <!-- Footer -->
+    <footer class="border-t border-stone-900 py-3 text-center text-[11px] text-stone-600 bg-black/60">
+        Vampire: The Masquerade V5 Companion • Baseado nas regras do <code class="text-stone-400">VampyreBot</code>
+    </footer>
+
+    <script src="/static/js/app.js"></script>
+</body>
+</html>
